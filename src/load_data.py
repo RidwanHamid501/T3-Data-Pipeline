@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 def set_search_path(conn: rc.Connection, cursor: rc.Cursor) -> None:
     """Set search path for the database schema"""
-    cursor.execute(f"SET search_path TO {environ["SCHEMA"]}")
+    cursor.execute(f"SET search_path TO {environ['SCHEMA']}")
     conn.commit()
 
 
@@ -43,9 +43,14 @@ def upload_transaction_data(conn: rc.Connection, cursor: rc.Cursor,
 
     batch_data = []
     for row in transaction_records:
+        truck_id = row[3]
+        payment_method_id = row[1]
+        total = row[2]
+        timestamp = row[0]
+
         row = row.split(',')
-        payment_id = get_payment_method_id(row[1], cursor)
-        batch_data.append((row[3], payment_id, row[2], row[0]))
+        payment_id = get_payment_method_id(payment_method_id, cursor)
+        batch_data.append((truck_id, payment_id, total, timestamp))
 
     cursor.executemany(insert_query, batch_data)
     conn.commit()
@@ -57,26 +62,20 @@ def load_csv(combined_data_file: str) -> list[str]:
         return file.read().splitlines()
 
 
-def load_env_and_get_connection() -> rc.Connection:
-    """Load environment variables and establish database connection"""
-    load_dotenv()
-    return get_connection()
-
-
 def main(file_path: str) -> None:
     """Main function to load data from the CSV file into the database"""
-
-    connection = load_env_and_get_connection()
+    load_dotenv()
+    connection = get_connection()
     cursor = connection.cursor()
 
     set_search_path(connection, cursor)
 
-    contents = load_csv(file_path)[1:]
-    upload_transaction_data(connection, cursor, contents)
+    transaction_data = load_csv(file_path)[1:]  # Skip header
+    upload_transaction_data(connection, cursor, transaction_data)
 
     connection.close()
 
 
 if __name__ == "__main__":
-    TEST_PATH = "../data/trucks/2024-11/4/12/combined_data.csv"
+    TEST_PATH = "data/trucks/2024-11/4/12/combined_data.csv"
     main(TEST_PATH)
