@@ -1,6 +1,6 @@
 # Tasty Truck Treats (T3) Data Pipeline Project
 
-<img src="https://everydaybest.com/wp-content/uploads/2013/04/food-truckin.jpg" />
+<img src="https://everydaybest.com/wp-content/uploads/2013/04/food-truckin.jpg" style="width: 400px;" />
 
 ## Project Overview
 
