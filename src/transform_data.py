@@ -1,35 +1,29 @@
 '''Clean data and combine into a CSV'''
 import os
 import pandas as pd
-from extract_data import main as file_downloader
+
+MIN_PAYMENT = 0
+MAX_PAYMENT = 100
 
 
-def clean_data(transaction_data):
+def clean_data(transaction_data: pd.DataFrame) -> pd.DataFrame:
     """Cleans the transaction data by removing rows with invalid totals and converting data types"""
 
     cleaned_data = transaction_data.copy()
 
-    cleaned_data = cleaned_data.loc[cleaned_data['total'].notna()]
-
-    cleaned_data['total_str'] = cleaned_data['total'].astype(str)
-    cleaned_data = cleaned_data.loc[cleaned_data['total_str'].str.lower(
-    ) != 'void']
-
     cleaned_data['total'] = pd.to_numeric(
         cleaned_data['total'], errors='coerce')
     cleaned_data = cleaned_data.loc[(
-        cleaned_data['total'] > 0) & (cleaned_data['total'] < 100)]
+        cleaned_data['total'] > MIN_PAYMENT) & (cleaned_data['total'] < MAX_PAYMENT)]
 
     cleaned_data['timestamp'] = pd.to_datetime(
         cleaned_data['timestamp'], errors='coerce')
     cleaned_data = cleaned_data.dropna(subset=['timestamp', 'total'])
 
-    cleaned_data = cleaned_data.drop(columns=['total_str'])
-
     return cleaned_data
 
 
-def combine_transaction_data_files(transaction_files, combined_output_path):
+def combine_transaction_data_files(transaction_files: list[str], combined_output_path: str) -> None:
     """Combines transaction files from the data/ folder.
     Produces a single combined CSV file in the data/ folder, then deletes the individual files
     """
@@ -55,9 +49,8 @@ def combine_transaction_data_files(transaction_files, combined_output_path):
     print(f"Combined transaction data saved to {combined_output_path}")
 
 
-def main(bucket_name: str) -> str:
+def main(csv_files: list[str]) -> str:
     """Download files from bucket and combine into a single CSV file"""
-    csv_files = file_downloader(bucket_name)
     output_csv = '../data/' + \
         '/'.join(csv_files[0].split('/')[:-1]) + '/combined_data.csv'
     combine_transaction_data_files(csv_files, output_csv)
@@ -65,5 +58,5 @@ def main(bucket_name: str) -> str:
 
 
 if __name__ == "__main__":
-    BUCKET = 'sigma-resources-truck'
+    BUCKET = ''
     main(BUCKET)
