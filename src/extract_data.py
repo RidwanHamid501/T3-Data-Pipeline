@@ -1,7 +1,10 @@
-"""Download specified truck data files from S3 into a local folder"""
+"""Download specified truck data files from S3 
+uploaded within the last 3 hours into a local folder"""
 import os
 from datetime import datetime, timedelta
 import boto3
+
+HOURS_BEFORE = 3
 
 
 def get_aws_session() -> boto3.Session:
@@ -52,7 +55,7 @@ def main(bucket_name: str) -> list[str]:
 
     bucket_files = get_files_in_bucket(client, bucket_name)
 
-    cutoff_time = datetime.now() - timedelta(hours=2)
+    cutoff_time = datetime.now() - timedelta(hours=HOURS_BEFORE-1)
     valid_paths = generate_time_paths(cutoff_time, datetime.now())
 
     downloaded_files = download_files(
@@ -62,5 +65,5 @@ def main(bucket_name: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    BUCKET = 'sigma-resources-truck'
+    BUCKET = ''
     main(BUCKET)
